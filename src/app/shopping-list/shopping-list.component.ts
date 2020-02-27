@@ -23,4 +23,8 @@ ingredients:Ingredient[];
 ngOnDestroy(){
   this.subscription.unsubscribe();
 }
+
+onEditItem(index:number){
+this.shopingService.startedEdited.next(index);
+}
 }
