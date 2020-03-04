@@ -14,6 +14,10 @@ import { AuthModule } from './auth/auth.module';
 import { RecipesModule } from './recipes/recipes.module';
 import { ShoppinglistModule } from './shopping-list/shopping-list.module';
 import { LoggingService } from './logging.service';
+import { StoreModule } from '@ngrx/store';
+import { shoppinglistReducer } from './shopping-list/store/shopping-list.reducer';
+import { AuthReducer } from './auth/store/auth.reducer';
+import * as fromApp from './app.reducer';
 @NgModule({
   declarations: [
     AppComponent,
@@ -29,7 +33,9 @@ import { LoggingService } from './logging.service';
     ShoppinglistModule,
     SharedModule,
     CoreModule,
-    AuthModule
+    AuthModule,
+    StoreModule.forRoot(fromApp.appReducer),
+
   ],
   providers: [LoggingService],
   bootstrap: [AppComponent]
