@@ -5,6 +5,11 @@ import { Observable, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AlertComponent } from '../alert/alert.component';
 import { PlaceholderDirective } from '../placeholder/placeholder.directive';
+import { Store } from '@ngrx/store';
+
+import * as fromApp from  '../app.reducer';
+
+import * as AuthActions from '../auth/store/auth.actions';
 
 @Component({
   selector: 'app-auth',
@@ -14,14 +19,22 @@ import { PlaceholderDirective } from '../placeholder/placeholder.directive';
 export class AuthComponent implements OnInit ,OnDestroy{
   isLoginMode=true;
   isLoading=false;
-  error:string;
+  error:string=null;
   private closeSub:Subscription;
+  storeSub:Subscription;
 @ViewChild(PlaceholderDirective,{static:false}) alertHost:PlaceholderDirective;
   constructor(private authService:AuthService,
     private router:Router,
-    private componentFactoryResolver:ComponentFactoryResolver) { }
+    private componentFactoryResolver:ComponentFactoryResolver,
+    private store:Store<fromApp.AppState>) { }
 
   ngOnInit(): void {
+    this.storeSub=this.store.select('auth').subscribe(authState=>{
+      this.isLoading=authState.loading;
+      this.error=authState.authError;
+      if(this.error)
+      this.showErrorAlert(this.error);
+    });
   }
 
   onSwitchMode() {
@@ -29,7 +42,7 @@ export class AuthComponent implements OnInit ,OnDestroy{
   }
 
   onSubmit(form:NgForm){
-    let authObs:Observable<authResponse>;
+    //let authObs:Observable<authResponse>;
     const email=form.value.email;
       const password=form.value.password;
     if (!form.valid){
@@ -37,23 +50,27 @@ export class AuthComponent implements OnInit ,OnDestroy{
     }
     this.isLoading=true;
     if(this.isLoginMode){
-authObs=this.authService.login(email,password);
+//authObs=this.authService.login(email,password);
+this.store.dispatch(new AuthActions.LoginStart({email:email,password:password}))
     } else {
       
-      authObs=this.authService.signup(email,password)
+     // authObs=this.authService.signup(email,password)
+     this.store.dispatch(new AuthActions.Signup({email:email,password:password}));
 
     }
 
-    authObs.subscribe((response)=>{
-      console.log(response);
-      this.isLoading=false;
-      this.router.navigate(['/recipes']);
-    }, (error)=>{
-      this.error=error;
+   
+
+    //authObs.subscribe((response)=>{
+      //console.log(response);
+      //this.isLoading=false;
+      //this.router.navigate(['/recipes']);
+    //}, (error)=>{
+      //this.error=error;
       //this.error='An error occurred';
-      this.showErrorAlert(error);
-      console.log(error);
-    });
+      //this.showErrorAlert(error);
+      //console.log(error);
+    //});
     
 this.isLoading=false;
 //console.log(form.value);
@@ -63,7 +80,7 @@ form.reset();
   
 
   onHandleError(){
-    this.error=null;
+    this.store.dispatch(new AuthActions.ClearError())
   }
 
   private showErrorAlert(message:string){
@@ -85,5 +102,6 @@ this.closeSub=componentRef.instance.close.subscribe(()=>{
     if(this.closeSub){
       this.closeSub.unsubscribe();
     }
+    this.storeSub.unsubscribe();
   }
 }
